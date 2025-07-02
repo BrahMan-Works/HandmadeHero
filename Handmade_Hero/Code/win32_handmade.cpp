@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <xinput.h>
 #include <dsound.h>
+#include <math.h>
 
 #define internal static
 #define local_persist static
@@ -12,6 +13,9 @@ typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
 typedef int32 bool32;
+
+typedef float real32;
+typedef double real64;
 
 typedef uint8_t uint8;
 typedef uint16_t uint16;
@@ -133,7 +137,7 @@ Win32InitDSound(HWND Window, int32 SamplesPerSecond, int32 BufferSize)
 
                 //create a primary buffer
                 LPDIRECTSOUNDBUFFER PrimaryBuffer;
-                if(SUCCEEDED(DirectSound->CreateSoundBuffer(&BufferDescription, &PrimaryBuffer, 0)))
+                if (SUCCEEDED(DirectSound->CreateSoundBuffer(&BufferDescription, &PrimaryBuffer, 0)))
                 {
                     HRESULT Error = PrimaryBuffer->SetFormat(&WaveFormat);
                     if (SUCCEEDED(Error))
@@ -157,7 +161,7 @@ Win32InitDSound(HWND Window, int32 SamplesPerSecond, int32 BufferSize)
             }
 
             //create a secondary buffer
-            
+
             DSBUFFERDESC BufferDescription = {};
             BufferDescription.dwSize = sizeof(BufferDescription);
             BufferDescription.dwFlags = 0;
@@ -166,7 +170,7 @@ Win32InitDSound(HWND Window, int32 SamplesPerSecond, int32 BufferSize)
             HRESULT Error = DirectSound->CreateSoundBuffer(&BufferDescription, &GlobalSecondaryBuffer, 0);
             if (SUCCEEDED(Error))
             {
-                
+
             }
         }
         else
@@ -350,16 +354,15 @@ main()
             0, 0, GetModuleHandleA(0), 0);
 
         if (Window)
-        {        
+        {
             int XOffset = 0;
             int YOffset = 0;
-            
+
             int SamplesPerSecond = 48000;
             int ToneHz = 256;
             int ToneVolume = 10000;
             uint32 RunningSampleIndex = 0;
-            int SquareWavePeriod = SamplesPerSecond / ToneHz;
-            int HalfSquareWavePeriod = SquareWavePeriod / 2;
+            int WavePeriod = SamplesPerSecond / ToneHz;
             int BytesPerSample = sizeof(int16) * 2;
             int SecondaryBufferSize = SamplesPerSecond * BytesPerSample;
 
@@ -381,7 +384,7 @@ main()
 
                     TranslateMessage(&Message);
                     DispatchMessageA(&Message);
-                    
+
                 }
 
                 //Poll gamepad input
@@ -466,9 +469,14 @@ main()
                             SampleIndex < Region1SampleCount;
                             ++SampleIndex)
                         {
-                            int16 SampleValue = ((RunningSampleIndex++ / HalfSquareWavePeriod) % 2 )? ToneVolume : -ToneVolume;
+                            real32 t = 2.0f * 3.14159267f * (real32)RunningSampleIndex / (real32)WavePeriod;
+                            real32 SineValue = sinf(t);
+                            int16 SampleValue = (int16)(SineValue * ToneVolume);
+                            
                             *SampleOut++ = SampleValue;
                             *SampleOut++ = SampleValue;
+
+                            RunningSampleIndex++;
                         }
 
                         SampleOut = (int16*)Region2;
@@ -476,16 +484,21 @@ main()
                             SampleIndex < Region2SampleCount;
                             ++SampleIndex)
                         {
-                            int16 SampleValue = ((RunningSampleIndex++ / HalfSquareWavePeriod) % 2) ? ToneVolume : -ToneVolume;
+                            real32 t = 2.0f * 3.14159267f * (real32)RunningSampleIndex / (real32)WavePeriod;
+                            real32 SineValue = sinf(t);
+                            int16 SampleValue = (int16)(SineValue * ToneVolume);
+                            
                             *SampleOut++ = SampleValue;
                             *SampleOut++ = SampleValue;
+
+                            RunningSampleIndex++;
                         }
 
                         GlobalSecondaryBuffer->Unlock(Region1, Region1Size, Region2, Region2Size);
                     }
                 }
 
-                
+
                 win32_window_dimension Dimension = Win32GetWindowDimension(Window);
                 Win32DisplayBufferInWindow(&GlobalBackBuffer, DeviceContext, Dimension.Width, Dimension.Height);
                 ReleaseDC(Window, DeviceContext);
