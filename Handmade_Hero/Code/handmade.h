@@ -1,12 +1,8 @@
-#if !defined(HANDMADE_H)
+#if !defined(hANDMADE_H)
 #include <stdint.h>
+#include <math.h>
 
-typedef unsigned char uint8;
-typedef unsigned int uint32;
-
-#define internal static
-#define local_persist static
-#define global_variable static
+#define ArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))
 
 /*
     Services that the platform layer provides to the game
@@ -24,7 +20,57 @@ struct game_offscreen_buffer
     int Pitch;
 };
 
-static void GameUpdateAndRender(game_offscreen_buffer* Buffer, int XOffset, int YOffset);
+struct game_sound_output_buffer
+{
+    int SamplesPerSecond;
+    int SampleCount;
+    int16_t* Samples;
+};
 
-#define HANDMADE_H
+struct game_button_state
+{
+    int HalfTransitionCount;
+    bool EndedDown;
+};
+
+struct game_controller_input
+{
+    bool IsAnalog;
+
+    float StartX;
+    float StartY;
+ 
+    float MinX;
+    float MinY;
+ 
+    float MaxX;
+    float MaxY;
+ 
+    float EndX;
+    float EndY;
+
+    union
+    {
+        game_button_state Buttons[6];
+        struct
+        {
+            game_button_state Up;
+            game_button_state Down;
+            game_button_state Left;
+            game_button_state Right;
+            game_button_state LeftShoulder;
+            game_button_state RightShoulder;
+        };
+    };
+};
+
+struct game_input
+{
+    game_controller_input Controllers[4];
+};
+
+
+static void GameUpdateAndRender(game_input* Input, game_sound_output_buffer* SoundBuffer, game_offscreen_buffer* Buffer);
+
+#define hANDMADE_H
 #endif
