@@ -13,7 +13,6 @@ GameOutputSound(game_sound_output_buffer* SoundBuffer, int ToneHz)
         SampleIndex < SoundBuffer->SampleCount;
         ++SampleIndex)
     {
-        // TODO(casey): Draw this out for people
         float SineValue = sinf(tSine);
         int16_t SampleValue = (int16_t)(SineValue * ToneVolume);
         *SampleOut++ = SampleValue;
@@ -57,13 +56,13 @@ GameUpdateAndRender(game_input* Input, game_sound_output_buffer* SoundBuffer, ga
     game_controller_input* Input0 = &Input->Controllers[0];
     if (Input0->IsAnalog)
     {
-        // NOTE(casey): Use analog movement tuning
+        // NOTE: Use analog movement tuning
         XOffset += (int)4.0f * (Input0->EndX);
         ToneHz = 256 + (int)(128.0f * (Input0->EndY));
     }
     else
     {
-        // NOTE(casey): Use digital movement tuning
+        // NOTE: Use digital movement tuning
     }
 
     // Input.AButtonEndedDown;
